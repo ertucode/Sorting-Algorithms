@@ -157,6 +157,17 @@ class Manager:
                         self.FPS = min(self.FPS + 50, 500)
                     case pygame.K_DOWN:
                         self.FPS = max(self.FPS - 50, 1)
+                    case pygame.K_RETURN:
+                        self.change_algo = True
+                        self.algo = Algo.no_algo
+                        inp = input(f"[{2} - {WIDTH - 2 * X_PADDING}]: ")
+                        try: 
+                            inp = int(inp)
+                            self.count = max(min(inp, WIDTH - 2 * X_PADDING), 2)
+                            self.create_random_list(self.count)
+                            return True
+                        except ValueError: 
+                            print("You didn't give a number") 
                     case pygame.K_SPACE:
                         self.change_algo = True
                         self.algo = Algo.no_algo

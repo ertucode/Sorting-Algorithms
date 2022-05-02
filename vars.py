@@ -1,0 +1,31 @@
+import pygame
+pygame.font.init()
+
+WIDTH, HEIGHT = 1800, 900
+
+FPS = 150
+
+IDLE_COLOR = "white"
+SORTED_COLOR = "lightblue"
+
+SORTING_COLOR1 = "red"
+SORTING_COLOR2 = "yellow"
+PIVOT_COLOR = "green"
+
+BACKGROUND_COLOR = "black"
+
+SORT_TOP = 80
+SORT_BOTTOM_PAD = 20
+SORT_BOTTOM = HEIGHT - SORT_BOTTOM_PAD
+SORT_MAX_HEIGHT = HEIGHT - SORT_TOP - SORT_BOTTOM_PAD
+X_PADDING = 20
+
+
+UI_TOP = 10
+TEXT_BOX_HEIGHT = 20
+FONT_SIZE = 20
+
+FPS_TUPLE = (X_PADDING, UI_TOP)
+ALGO_TUPLE = (X_PADDING, UI_TOP + TEXT_BOX_HEIGHT)
+
+my_font = pygame.font.SysFont('Century Schoolbook', FONT_SIZE)

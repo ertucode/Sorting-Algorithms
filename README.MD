@@ -19,6 +19,8 @@
 
 <span style="color:yellow">**6**</span>  : Change sorting algorithm to Insertion Sort
 
+<span style="color:yellow">**7**</span>  : Change sorting algorithm to Selection Sort
+
 <span style="color:yellow">**SPACE**</span> : Randomize data
 
 <span style="color:yellow">**C**</span> : Change data count

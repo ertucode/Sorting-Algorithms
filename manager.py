@@ -210,17 +210,15 @@ class Manager:
                         self.FPS = min(self.FPS + 50, 500)
                     case pygame.K_DOWN:
                         self.FPS = max(self.FPS - 50, 1)
-                    case pygame.K_RETURN:
+                    case pygame.K_c:
                         self.change_algo = True
                         self.algo = Algo.no_algo
-                        inp = input(f"[{2} - {WIDTH - 2 * X_PADDING}]: ")
-                        try: 
-                            inp = int(inp)
-                            self.data_count = max(min(inp, WIDTH - 2 * X_PADDING), 2)
-                            self.create_random_list(self.data_count)
-                            return True
-                        except ValueError: 
-                            print("You didn't give a number") 
+                        
+                        self.data_count = self.get_user_input("Data count", 2, WIDTH - 2 * X_PADDING, 4)
+                        self.create_random_list(self.data_count)
+                        return True
+                    case pygame.K_f:
+                        self.FPS = self.get_user_input("FPS", 1, 500, 3)
                     case pygame.K_SPACE:
                         self.change_algo = True
                         self.algo = Algo.no_algo
@@ -269,3 +267,36 @@ class Manager:
                 cur = self.rects[r]
                 pygame.draw.rect(self.win, BACKGROUND_COLOR, (cur.x, SORT_TOP, cur.w, SORT_MAX_HEIGHT))
                 pygame.draw.rect(self.win, IDLE_COLOR, cur) 
+
+    def get_user_input(self, message, min_bound, max_bound, max_digit):
+        entry = ""
+
+        def draw_input_field(num):
+            input_surface = my_font.render(f"Data count [{min_bound} - {max_bound}]: {num}", True, "white")
+            pygame.draw.rect(self.win, BACKGROUND_COLOR, ENTRY_RECT)
+            self.win.blit(input_surface, ENTRY_RECT)
+            pygame.display.update()
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    return True 
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        entry = entry[:-1]
+                    elif event.key == pygame.K_RETURN:
+                        return max(min(int(entry), max_bound), min_bound)
+                        
+                    try:
+                        int(event.unicode) 
+                        if len(entry) < max_digit: entry += event.unicode
+                    except:
+                        pass
+
+            draw_input_field(entry)
+
+                
+
+            

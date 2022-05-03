@@ -1,12 +1,11 @@
 
 
-<span style="color:yellow">**←**</span> : Reduce speed 
+&emsp; &emsp; &emsp; &emsp; &emsp; &emsp;<span style="color:yellow">**↑**</span>  : Increase speed by a lot
 
-<span style="color:yellow">**↓**</span>  : Reduce speed by a lot
-
+<span style="color:yellow">**←**</span> : Reduce speed &emsp; &emsp; &emsp;
 <span style="color:yellow">**→**</span> : Increase speed
 
-<span style="color:yellow">**↑**</span>  : Increase speed by a lot
+&emsp; &emsp; &emsp; &emsp; &emsp;&emsp;<span style="color:yellow">**↓**</span>  :Reduce speed by a lot
 
 <span style="color:yellow">**1**</span>  : Change sorting algorithm to Bubble Sort
 
@@ -18,3 +17,6 @@
 
 <span style="color:yellow">**SPACE**</span> : Randomize data
 
+<span style="color:yellow">**C**</span> : Change data count
+
+<span style="color:yellow">**F**</span> : Change FPS

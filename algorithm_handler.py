@@ -10,7 +10,9 @@ class AlgorithmHandler:
                             "radix" : "Current algorithm: Radix Sort",
                             "merge" : "Current algorithm: Merge Sort",
                             "insertion" : "Current algorithm: Insertion Sort",
-                            "selection" : "Current algorithm: Selection Sort"
+                            "selection" : "Current algorithm: Selection Sort",
+                            "shell": "Current algorithm: Shell Sort",
+                            "cocktail": "Current algorithm: Cocktail Sort"
                             }
 
         self.algo = "none"
@@ -22,6 +24,8 @@ class AlgorithmHandler:
                                pygame.K_5: "merge",
                                pygame.K_6: "insertion",
                                pygame.K_7: "selection",
+                               pygame.K_8: "shell",
+                               pygame.K_9: "cocktail"
         }
 
 

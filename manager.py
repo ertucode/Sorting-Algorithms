@@ -3,7 +3,7 @@ import random
 from enum import Enum
 import time
 from algorithm_handler import AlgorithmHandler
-
+from sound_player import SoundPlayer
 
 
 class Manager:
@@ -20,10 +20,9 @@ class Manager:
 
         self.FPS = FPS
 
+        self.muted = True
+
         self.time_in_algo = 0
-
-        self.data_count = count
-
 
 
     def run(self):
@@ -44,6 +43,8 @@ class Manager:
                     elif self.algorithm_handler.algo == "merge": self._merge_sort()
                     elif self.algorithm_handler.algo == "insertion": self.insertion_sort()
                     elif self.algorithm_handler.algo == "selection": self.selection_sort()
+                    elif self.algorithm_handler.algo == "shell": self.shell_sort()
+                    elif self.algorithm_handler.algo == "cocktail": self.cocktail_sort()
 
                     if not self.change_algo: self.sorted = True
                     self.time_spent = time.time() - self.start
@@ -52,15 +53,21 @@ class Manager:
 
             
     def create_random_list(self, count):
-        self.current_list = random.sample(range(1, count + 1), count)
+        max_num = 3 * count
+        self.current_list = random.sample(range(1, max_num + 1), count)
         self.rect_size = (WIDTH - 2 * X_PADDING) / count
-        self.unit_height = SORT_MAX_HEIGHT / count
+        self.unit_height = SORT_MAX_HEIGHT / max_num
 
 
         self.rects = [pygame.Rect(( X_PADDING + i * self.rect_size, SORT_BOTTOM - r * self.unit_height, self.rect_size, r * self.unit_height )) for i, r in enumerate(self.current_list)]
         self.sorted = False
 
+        self.sound_player = SoundPlayer(count)
+
         self.count_surface = my_font.render(f"Data count: {count}", True, "white")
+
+        self.data_count = count
+
 
     def bubble_sort(self):
         n = len(self.current_list)
@@ -80,11 +87,12 @@ class Manager:
     def change_items(self, i1, i2):
         self.current_list[i1], self.current_list[i2] = self.current_list[i2], self.current_list[i1]
         self.rects[i2].y, self.rects[i2].h, self.rects[i1].y, self.rects[i1].h = self.rects[i1].y, self.rects[i1].h, self.rects[i2].y, self.rects[i2].h  
+        
 
     def _quick_sort(self):
 
         def partition(low, high):
-            i = (low-1)
+            i = low
 
             if self.algorithm_handler.algo == "quick_random":
                 r = random.randint(low, high)
@@ -95,17 +103,19 @@ class Manager:
         
             for j in range(low, high):
                 if self.current_list[j] <= pivot:
-                    i = i+1
                     self.change_items(i, j)
+                    self.draw_rect((i, SORTING_COLOR2), (j, SORTING_COLOR1))
+                    i = i+1
+                else:
+                    self.draw_rect((min(pivot, len(self.current_list) - 1), PIVOT_COLOR), (j, SORTING_COLOR1))
 
                 
                 if self.check_events(): return
 
-                self.draw_rect((min(pivot, len(self.current_list) - 1), PIVOT_COLOR), (j, SORTING_COLOR1), (i, SORTING_COLOR2))
 
-            self.change_items(i+1, high)
-            self.draw_rect((high, PIVOT_COLOR), (i+1, SORTING_COLOR1))
-            return (i+1)
+            self.change_items(i, high)
+            self.draw_rect((high, PIVOT_COLOR), (i, SORTING_COLOR1))
+            return i
 
         def quick_sort(low, high):
             if not self.running or self.change_algo: return
@@ -224,6 +234,54 @@ class Manager:
             self.change_items(i, min_index)
             self.draw_rect((i, SORTING_COLOR1), (min_index, SORTING_COLOR2))
 
+    def shell_sort(self):
+        length = len(self.current_list)
+        gap = length // 2
+
+        while gap > 0:
+            i = 0
+            while i < length:
+                w = i
+                while w >= 0 and w+gap < length and self.current_list[w] > self.current_list[w+gap]:
+                    self.change_items(w, w+gap)
+                    self.draw_rect((w, SORTING_COLOR1), (w+gap, SORTING_COLOR2))
+                    if self.check_events(): return
+                    w -= gap
+                i += gap
+            gap //= 2
+
+    def cocktail_sort(self):
+        right = len(self.current_list) - 1
+        left = 0
+        i = left
+        direction = 1
+        changed = False
+
+        while left < right:
+            if direction == 1:
+                if self.current_list[i] > self.current_list[i+direction]:
+                    changed = True
+                    self.change_items(i, i + direction)
+            else:
+                if self.current_list[i] < self.current_list[i+direction]:
+                    changed = True
+                    self.change_items(i, i + direction)
+            self.draw_rect((i, SORTING_COLOR1), (i + direction, SORTING_COLOR2))
+            if self.check_events(): return
+            i += direction
+            if i == right:
+                direction *= -1
+                right = right - 1
+                i += direction
+                if changed: changed = False
+                else: return
+            if i == left:
+                direction *= -1
+                left = left + 1
+                i += direction
+                if changed: changed = False
+                else: return
+
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -235,6 +293,8 @@ class Manager:
                     self.change_algo = True
                     return True
                 match event.key:
+                    case pygame.K_m:
+                        self.muted = False if self.muted else True
                     case pygame.K_RIGHT:
                         self.FPS = min(self.FPS + 10, 500)
                     case pygame.K_LEFT:
@@ -258,7 +318,6 @@ class Manager:
                         self.algorithm_handler.algo = "none"
                         self.create_random_list(self.data_count)
                         return True
-        
 
     def draw(self):
 
@@ -305,6 +364,8 @@ class Manager:
 
         for r, c  in rects:
             cur = self.rects[r]
+            if not self.muted:
+                self.sound_player.play(r)
             pygame.draw.rect(self.win, BACKGROUND_COLOR, (cur.x, SORT_TOP, cur.w, SORT_MAX_HEIGHT))
             pygame.draw.rect(self.win, c, cur)  
 

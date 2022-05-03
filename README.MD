@@ -21,8 +21,14 @@
 
 <span style="color:yellow">**7**</span>  : Change sorting algorithm to Selection Sort
 
+<span style="color:yellow">**8**</span>  : Change sorting algorithm to Shell Sort
+
+<span style="color:yellow">**9**</span>  : Change sorting algorithm to Cocktail Sort
+
 <span style="color:yellow">**SPACE**</span> : Randomize data
 
 <span style="color:yellow">**C**</span> : Change data count
 
 <span style="color:yellow">**F**</span> : Change FPS
+
+<span style="color:yellow">**M**</span> : Toggle Sound

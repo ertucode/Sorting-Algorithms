@@ -10,6 +10,7 @@ class Algo(Enum):
     quick_random = "Current algorithm: Quick Sort (random-pivot)"
     radix = "Current algorithm: Radix Sort"
     merge = "Current algorithm: Merge Sort"
+    insertion = "Current algorithm: Insertion Sort"
 
 
 class Manager:
@@ -48,6 +49,7 @@ class Manager:
                     elif self.algo == Algo.quick_right or self.algo == Algo.quick_random: self._quick_sort()
                     elif self.algo == Algo.radix: self.radix_sort()
                     elif self.algo == Algo.merge: self._merge_sort()
+                    elif self.algo == Algo.insertion: self.insertion_sort()
                     self.time_spent = time.time() - self.start
 
 
@@ -228,6 +230,18 @@ class Manager:
 
         if not self.change_algo: self.sorted = True
 
+    def insertion_sort(self):
+        for i in range(1, len(self.current_list)):
+            for j in reversed(range(1, i+1)):
+                if not self.current_list[j] < self.current_list[j-1]:
+                    break
+                else:
+                    self.change_items(j, j-1)
+                    self.draw_rect((j, SORTING_COLOR1), (j-1, SORTING_COLOR2))
+                    if self.check_events(): return
+
+        self.sorted = True
+
 
     def check_events(self):
         for event in pygame.event.get():
@@ -257,6 +271,10 @@ class Manager:
                         self.algo = Algo.merge
                         self.change_algo = True
                         return True
+                    case pygame.K_6:
+                        self.algo = Algo.insertion
+                        self.change_algo = True
+                        return True
                     case pygame.K_RIGHT:
                         self.FPS = min(self.FPS + 10, 500)
                     case pygame.K_LEFT:
@@ -273,7 +291,9 @@ class Manager:
                         self.create_random_list(self.data_count)
                         return True
                     case pygame.K_f:
+                        st = time.time()
                         self.FPS = self.get_user_input("FPS", 1, 500, 3, self.FPS)
+                        self.start += time.time() - st
                     case pygame.K_SPACE:
                         self.change_algo = True
                         self.algo = Algo.no_algo

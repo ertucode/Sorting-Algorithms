@@ -14,5 +14,7 @@
 
 <span style="color:yellow">**3**</span>  : Change sorting algorithm to Quick Sort (random-pivot)
 
+<span style="color:yellow">**4**</span>  : Change sorting algorithm to Radix Sort
+
 <span style="color:yellow">**SPACE**</span> : Randomize data
 

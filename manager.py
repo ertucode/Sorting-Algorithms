@@ -4,9 +4,10 @@ from enum import Enum
 
 class Algo(Enum):
     no_algo = 1
-    bubble = 2
-    quick_right = 3
-    quick_random = 4
+    bubble = "Current algorithm: Bubble Sort"
+    quick_right = "Current algorithm: Quick Sort (right-pivot)"
+    quick_random = "Current algorithm: Quick Sort (random-pivot)"
+    radix = "Current algorithm: Radix Sort"
 
 
 class Manager:
@@ -23,7 +24,9 @@ class Manager:
 
         self.FPS = FPS
 
-        self.count = count
+        self.data_count = count
+
+
 
     def run(self):
 
@@ -35,17 +38,18 @@ class Manager:
             if not self.sorted:
                 if self.algo == Algo.bubble: self.bubble_sort()
                 elif self.algo == Algo.quick_right or self.algo == Algo.quick_random: self._quick_sort()
+                elif self.algo == Algo.radix: self.radix_sort()
 
                 self.change_algo = False
 
             
     def create_random_list(self, count):
         self.current_list = random.sample(range(1, count + 1), count)
-        rect_size = (WIDTH - 2 * X_PADDING) / count
-        unit_height = SORT_MAX_HEIGHT / count
+        self.rect_size = (WIDTH - 2 * X_PADDING) / count
+        self.unit_height = SORT_MAX_HEIGHT / count
 
 
-        self.rects = [pygame.Rect(( X_PADDING + i * rect_size, SORT_BOTTOM - r * unit_height, rect_size, r * unit_height )) for i, r in enumerate(self.current_list)]
+        self.rects = [pygame.Rect(( X_PADDING + i * self.rect_size, SORT_BOTTOM - r * self.unit_height, self.rect_size, r * self.unit_height )) for i, r in enumerate(self.current_list)]
         self.sorted = False
 
     def bubble_sort(self):
@@ -82,7 +86,7 @@ class Manager:
                 elif event.key == pygame.K_SPACE:
                     self.change_algo = True
                     self.algo = Algo.no_algo
-                    self.create_random_list(self.count)
+                    self.create_random_list(self.data_count)
                     return True
 
     def change_items(self, i1, i2):
@@ -129,6 +133,51 @@ class Manager:
         if self.change_algo: return
         if self.running: self.sorted = True
 
+    def radix_sort(self):
+        max_num = max(self.current_list)
+        digit_count = len("%i" % max_num)
+
+        
+        
+        for i in range(digit_count):
+            prev_list = self.current_list[:]
+            prev_rects = self.rects[:]
+
+            modulo = 10 ** i
+            digits = [[] for _ in range(10)]
+            digit_rects = [[] for _ in range(10)]
+
+
+            for index, j in enumerate(self.current_list):
+                digits[j // modulo % 10].append(j)
+
+            index = 0
+            for d, digit in enumerate(digits):
+                for val in digit:
+                    digit_rects[d].append(pygame.Rect( X_PADDING + index * self.rect_size, SORT_BOTTOM - val * self.unit_height, self.rect_size,val * self.unit_height ))
+                    index += 1
+
+            self.current_list = []
+            self.rects = []
+            length = 0
+            for digit, digit_rect in zip(digits, digit_rects):
+                self.current_list += digit
+                self.rects += digit_rect
+
+                for j in range(len(digit_rect)):
+                    if self.check_events():
+                        self.current_list = prev_list
+                        self.rects = prev_rects
+                        return
+                        
+                    self.draw_rect((length + j, SORTING_COLOR1))
+                length = len(self.rects)
+
+            self.current_list = [num for digit in digits for num in digit]
+
+        self.sorted = True
+
+
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -149,6 +198,10 @@ class Manager:
                         self.algo = Algo.quick_random
                         self.change_algo = True
                         return True
+                    case pygame.K_4:
+                        self.algo = Algo.radix
+                        self.change_algo = True
+                        return True
                     case pygame.K_RIGHT:
                         self.FPS = min(self.FPS + 10, 500)
                     case pygame.K_LEFT:
@@ -163,15 +216,15 @@ class Manager:
                         inp = input(f"[{2} - {WIDTH - 2 * X_PADDING}]: ")
                         try: 
                             inp = int(inp)
-                            self.count = max(min(inp, WIDTH - 2 * X_PADDING), 2)
-                            self.create_random_list(self.count)
+                            self.data_count = max(min(inp, WIDTH - 2 * X_PADDING), 2)
+                            self.create_random_list(self.data_count)
                             return True
                         except ValueError: 
                             print("You didn't give a number") 
                     case pygame.K_SPACE:
                         self.change_algo = True
                         self.algo = Algo.no_algo
-                        self.create_random_list(self.count)
+                        self.create_random_list(self.data_count)
                         return True
         
 
@@ -192,19 +245,13 @@ class Manager:
 
 
     def draw_rect(self, *rects):
+
         self.clock.tick(self.FPS)
 
         pygame.draw.rect(self.win, BACKGROUND_COLOR, (0, 0, WIDTH, SORT_TOP))
         fps_surface = my_font.render(f"FPS: {self.clock.get_fps():.0f} - {self.FPS}", True, "white")
-        match self.algo:
-            case Algo.quick_random:
-                cur_alg = "Current algorithm: Quick Sort (random-pivot)"
-            case Algo.quick_right:
-                cur_alg = "Current algorithm: Quick Sort (right-pivot)"
-            case Algo.bubble:
-                cur_alg = "Current algorithm: Bubble Sort"
 
-        algo_surface = my_font.render(cur_alg, True, "white")
+        algo_surface = my_font.render(self.algo.value, True, "white")
 
         self.win.blit(fps_surface, FPS_TUPLE)
         self.win.blit(algo_surface, ALGO_TUPLE)

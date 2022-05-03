@@ -15,6 +15,8 @@
 
 <span style="color:yellow">**4**</span>  : Change sorting algorithm to Radix Sort
 
+<span style="color:yellow">**5**</span>  : Change sorting algorithm to Merge Sort
+
 <span style="color:yellow">**SPACE**</span> : Randomize data
 
 <span style="color:yellow">**C**</span> : Change data count

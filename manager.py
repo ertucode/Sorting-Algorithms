@@ -1,13 +1,15 @@
 from vars import *
 import random
 from enum import Enum
+import time
 
 class Algo(Enum):
-    no_algo = 1
+    no_algo = "No algo"
     bubble = "Current algorithm: Bubble Sort"
     quick_right = "Current algorithm: Quick Sort (right-pivot)"
     quick_random = "Current algorithm: Quick Sort (random-pivot)"
     radix = "Current algorithm: Radix Sort"
+    merge = "Current algorithm: Merge Sort"
 
 
 class Manager:
@@ -24,6 +26,8 @@ class Manager:
 
         self.FPS = FPS
 
+        self.time_in_algo = 0
+
         self.data_count = count
 
 
@@ -35,12 +39,18 @@ class Manager:
             self.check_events() 
 
             self.draw()
+            self.change_algo = False
             if not self.sorted:
-                if self.algo == Algo.bubble: self.bubble_sort()
-                elif self.algo == Algo.quick_right or self.algo == Algo.quick_random: self._quick_sort()
-                elif self.algo == Algo.radix: self.radix_sort()
+                if self.algo == Algo.no_algo: self.time_in_algo = 0
+                else:
+                    self.start = time.time()
+                    if self.algo == Algo.bubble: self.bubble_sort()
+                    elif self.algo == Algo.quick_right or self.algo == Algo.quick_random: self._quick_sort()
+                    elif self.algo == Algo.radix: self.radix_sort()
+                    elif self.algo == Algo.merge: self._merge_sort()
+                    self.time_spent = time.time() - self.start
 
-                self.change_algo = False
+
 
             
     def create_random_list(self, count):
@@ -51,6 +61,8 @@ class Manager:
 
         self.rects = [pygame.Rect(( X_PADDING + i * self.rect_size, SORT_BOTTOM - r * self.unit_height, self.rect_size, r * self.unit_height )) for i, r in enumerate(self.current_list)]
         self.sorted = False
+
+        self.count_surface = my_font.render(f"Data count: {count}", True, "white")
 
     def bubble_sort(self):
         n = len(self.current_list)
@@ -177,6 +189,45 @@ class Manager:
 
         self.sorted = True
 
+    def _merge_sort(self):
+        def merge(low, mid, high):
+            if self.change_algo: return
+            i1, i2 = low, mid + 1
+            temp = []
+            while i1 <= mid and i2 <= high:
+                if self.current_list[i1] < self.current_list[i2]: 
+                    temp.append(self.current_list[i1])
+                    i1 += 1
+                else: 
+                    temp.append(self.current_list[i2])
+                    i2 += 1
+
+            if i1 > mid:
+                temp.extend(self.current_list[i2:high+1])
+            else: 
+                temp.extend(self.current_list[i1:mid+1])
+            
+            for val in temp:
+                self.current_list[low] = val
+                self.rects[low] = pygame.Rect( X_PADDING + low * self.rect_size, SORT_BOTTOM - val * self.unit_height, self.rect_size,val * self.unit_height )
+                self.draw_rect((low, SORTING_COLOR1))
+                if self.check_events(): return
+                low += 1
+
+
+        def merge_sort(low, high):
+            if self.change_algo: return
+            mid = (high + low) // 2
+
+            if low < high:
+                merge_sort(low, mid)
+                merge_sort(mid + 1, high)
+                merge(low, mid, high)
+
+        merge_sort(0, len(self.current_list) - 1)
+
+        if not self.change_algo: self.sorted = True
+
 
     def check_events(self):
         for event in pygame.event.get():
@@ -202,6 +253,10 @@ class Manager:
                         self.algo = Algo.radix
                         self.change_algo = True
                         return True
+                    case pygame.K_5:
+                        self.algo = Algo.merge
+                        self.change_algo = True
+                        return True
                     case pygame.K_RIGHT:
                         self.FPS = min(self.FPS + 10, 500)
                     case pygame.K_LEFT:
@@ -214,11 +269,11 @@ class Manager:
                         self.change_algo = True
                         self.algo = Algo.no_algo
                         
-                        self.data_count = self.get_user_input("Data count", 2, WIDTH - 2 * X_PADDING, 4)
+                        self.data_count = self.get_user_input("Data count", 2, WIDTH - 2 * X_PADDING, 4, self.data_count)
                         self.create_random_list(self.data_count)
                         return True
                     case pygame.K_f:
-                        self.FPS = self.get_user_input("FPS", 1, 500, 3)
+                        self.FPS = self.get_user_input("FPS", 1, 500, 3, self.FPS)
                     case pygame.K_SPACE:
                         self.change_algo = True
                         self.algo = Algo.no_algo
@@ -229,10 +284,22 @@ class Manager:
     def draw(self):
 
         self.clock.tick(FPS)
+        self.win.fill(BACKGROUND_COLOR)
+
+        pygame.draw.rect(self.win, BACKGROUND_COLOR, (0, 0, WIDTH, SORT_TOP))
+        fps_surface = my_font.render(f"FPS: {self.clock.get_fps():.0f} - {self.FPS}", True, "white")
+
+        self.win.blit(fps_surface, FPS_TUPLE)
+        self.win.blit(self.count_surface, COUNT_TUPLE)
+
+        if self.sorted:
+            time_surface = my_font.render(f"Time spent: {self.time_spent:.2f}", True, "white")
+            algo_surface = my_font.render(self.algo.value, True, "white")
+            self.win.blit(time_surface, TIME_TUPLE)
+            self.win.blit(algo_surface, ALGO_TUPLE)
 
         if self.sorted: c = SORTED_COLOR
         else: c = IDLE_COLOR
-        self.win.fill(BACKGROUND_COLOR)
         for r in self.rects:
             pygame.draw.rect(self.win, c, r)
 
@@ -247,12 +314,15 @@ class Manager:
         self.clock.tick(self.FPS)
 
         pygame.draw.rect(self.win, BACKGROUND_COLOR, (0, 0, WIDTH, SORT_TOP))
-        fps_surface = my_font.render(f"FPS: {self.clock.get_fps():.0f} - {self.FPS}", True, "white")
 
+        fps_surface = my_font.render(f"FPS: {self.clock.get_fps():.0f} - {self.FPS}", True, "white")
         algo_surface = my_font.render(self.algo.value, True, "white")
+        time_surface = my_font.render(f"Time spent: {time.time()-self.start:.2f}", True, "white")
 
         self.win.blit(fps_surface, FPS_TUPLE)
         self.win.blit(algo_surface, ALGO_TUPLE)
+        self.win.blit(self.count_surface, COUNT_TUPLE)
+        self.win.blit(time_surface, TIME_TUPLE)
 
         for r, c  in rects:
             cur = self.rects[r]
@@ -268,11 +338,11 @@ class Manager:
                 pygame.draw.rect(self.win, BACKGROUND_COLOR, (cur.x, SORT_TOP, cur.w, SORT_MAX_HEIGHT))
                 pygame.draw.rect(self.win, IDLE_COLOR, cur) 
 
-    def get_user_input(self, message, min_bound, max_bound, max_digit):
+    def get_user_input(self, message, min_bound, max_bound, max_digit, default):
         entry = ""
 
         def draw_input_field(num):
-            input_surface = my_font.render(f"Data count [{min_bound} - {max_bound}]: {num}", True, "white")
+            input_surface = my_font.render(f"{message} [{min_bound} - {max_bound}]: {num}", True, "white")
             pygame.draw.rect(self.win, BACKGROUND_COLOR, ENTRY_RECT)
             self.win.blit(input_surface, ENTRY_RECT)
             pygame.display.update()
@@ -287,7 +357,7 @@ class Manager:
                     if event.key == pygame.K_BACKSPACE:
                         entry = entry[:-1]
                     elif event.key == pygame.K_RETURN:
-                        return max(min(int(entry), max_bound), min_bound)
+                        return max(min(int(entry or default), max_bound), min_bound)
                         
                     try:
                         int(event.unicode) 

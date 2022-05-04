@@ -3,7 +3,7 @@ pygame.font.init()
 
 WIDTH, HEIGHT = 1800, 900
 
-FPS = 150
+FPS = 400
 
 IDLE_COLOR = "white"
 SORTED_COLOR = "lightblue"

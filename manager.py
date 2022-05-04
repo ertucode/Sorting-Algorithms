@@ -7,7 +7,7 @@ from sound_player import SoundPlayer
 
 
 class Manager:
-    def __init__(self, count):
+    def __init__(self, count, fps, muted):
         pygame.init()
         self.win = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Sorting Algorithms")   
@@ -16,13 +16,12 @@ class Manager:
         self.list = self.create_random_list(count)
         self.sorted = False
         self.algorithm_handler = AlgorithmHandler()
-        self.change_algo = False
+        self.sort_cancelled = False
 
-        self.FPS = FPS
+        self.FPS = fps or FPS
 
-        self.muted = True
+        self.muted = muted
 
-        self.time_in_algo = 0
 
 
     def run(self):
@@ -30,27 +29,28 @@ class Manager:
         while self.running:
 
             self.check_events() 
-
             self.draw()
-            self.change_algo = False
-            if not self.sorted:
-                if self.algorithm_handler.algo == "none": self.time_in_algo = 0
-                else:
-                    self.start = time.time()
-                    if self.algorithm_handler.algo == "bubble": self.bubble_sort()
-                    elif self.algorithm_handler.algo == "quick_random" or self.algorithm_handler.algo == "quick_right": self._quick_sort()
-                    elif self.algorithm_handler.algo == "radix": self.radix_sort()
-                    elif self.algorithm_handler.algo == "merge": self._merge_sort()
-                    elif self.algorithm_handler.algo == "insertion": self.insertion_sort()
-                    elif self.algorithm_handler.algo == "selection": self.selection_sort()
-                    elif self.algorithm_handler.algo == "shell": self.shell_sort()
-                    elif self.algorithm_handler.algo == "cocktail": self.cocktail_sort()
 
-                    if not self.change_algo: self.sorted = True
-                    self.time_spent = time.time() - self.start
+            self.sort_cancelled = False
+            if self.sorted: continue
+            if self.algorithm_handler.algo == "none": continue
 
+            # Not sorted and an algorithm is picked
+            self._sort()
 
+    def _sort(self):
+        self.start = time.time()
+        if self.algorithm_handler.algo == "bubble": self.bubble_sort()
+        elif self.algorithm_handler.algo == "quick_random" or self.algorithm_handler.algo == "quick_right": self._quick_sort()
+        elif self.algorithm_handler.algo == "radix": self.radix_sort()
+        elif self.algorithm_handler.algo == "merge": self._merge_sort()
+        elif self.algorithm_handler.algo == "insertion": self.insertion_sort()
+        elif self.algorithm_handler.algo == "selection": self.selection_sort()
+        elif self.algorithm_handler.algo == "shell": self.shell_sort()
+        elif self.algorithm_handler.algo == "cocktail": self.cocktail_sort()
 
+        if not self.sort_cancelled: self.sorted = True
+        self.time_spent = time.time() - self.start
             
     def create_random_list(self, count):
         max_num = 3 * count
@@ -118,7 +118,7 @@ class Manager:
             return i
 
         def quick_sort(low, high):
-            if not self.running or self.change_algo: return
+            if not self.running or self.sort_cancelled: return
             
             if low <= high:
                 pi = partition(low, high)
@@ -174,7 +174,7 @@ class Manager:
 
     def _merge_sort(self):
         def merge(low, mid, high):
-            if self.change_algo: return
+            if self.sort_cancelled: return
             i1, i2 = low, mid + 1
             temp = []
             while i1 <= mid and i2 <= high:
@@ -199,7 +199,7 @@ class Manager:
 
 
         def merge_sort(low, high):
-            if self.change_algo: return
+            if self.sort_cancelled: return
             mid = (high + low) // 2
 
             if low < high:
@@ -289,9 +289,10 @@ class Manager:
                 return True 
 
             if event.type == pygame.KEYDOWN:
-                if self.algorithm_handler.handle_key(event.key):
-                    self.change_algo = True
-                    return True
+                if not self.sorted:
+                    if self.algorithm_handler.handle_key(event.key):
+                        self.sort_cancelled = True
+                        return True
                 match event.key:
                     case pygame.K_m:
                         self.muted = False if self.muted else True
@@ -304,7 +305,7 @@ class Manager:
                     case pygame.K_DOWN:
                         self.FPS = max(self.FPS - 50, 1)
                     case pygame.K_c:
-                        self.change_algo = True
+                        self.sort_cancelled = True
                         self.algorithm_handler.algo = "none"
                         self.data_count = self.get_user_input("Data count", 2, WIDTH - 2 * X_PADDING, 4, self.data_count)
                         self.create_random_list(self.data_count)
@@ -314,7 +315,7 @@ class Manager:
                         self.FPS = self.get_user_input("FPS", 1, 500, 3, self.FPS)
                         self.start += time.time() - st
                     case pygame.K_SPACE:
-                        self.change_algo = True
+                        self.sort_cancelled = True
                         self.algorithm_handler.algo = "none"
                         self.create_random_list(self.data_count)
                         return True
